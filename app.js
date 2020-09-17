@@ -4,9 +4,11 @@ var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 var cors = require('cors')
-var graphQLRouter = require('./routes/graphQL');
-var restRouter = require('./routes/rest');
-
+var graphQLRouter = require('./routes/GraphQLRouter');
+var restRouter = require('./routes/RESTRouter');
+var indexRouter = require('./routes/indexRouter');
+const mongoose = require('mongoose');
+const bodyParser = require('body-parser')
 
 var app = express();
 
@@ -15,11 +17,19 @@ app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
 
 app.use(logger('dev'));
-app.use(express.json());
+// app.use(express.json());
+app.use(bodyParser.urlencoded({
+  extended: true
+  }));
+
+ app.use(bodyParser.json());
 
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Index Router
+app.use('/', indexRouter);
 
 // GraphQL Component
 app.use('/graphql',graphQLRouter);
@@ -41,6 +51,14 @@ app.use(function(err, req, res, next) {
   // render the error page
   res.status(err.status || 500);
   res.render('error');
+});
+
+
+mongoose.connect('mongodb://localhost:27017/SimpleBlog', {useNewUrlParser: true, useUnifiedTopology: true})
+.then(() => {
+  console.log('connected to database service');
+}).catch(err =>  {
+  console.log(err);
 });
 
 module.exports = app;
